@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 )
 
@@ -16,12 +17,14 @@ type HttpServer struct {
 func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
-
 		contentType := r.Header.Get("Content-Type")
 
 		fmt.Printf("POST request received  Content-Type: %s\n", contentType)
-		if contentType != "image/jpeg" {
+		isImage, _ := checkImageType(contentType)
+		if !isImage {
 			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "Invalid content type. Only images are allowed.")
+			return
 		}
 		fmt.Fprint(w, createAsset(r.Body))
 		w.WriteHeader(http.StatusCreated)
@@ -59,11 +62,6 @@ func createAsset(data io.ReadCloser) string {
 	}
 	return filename
 }
-
-func fsSetHeaders(fs http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "image/jpeg")
-
-		fs.ServeHTTP(w, r)
-	}
+func checkImageType(contentType string) (bool, error) {
+	return regexp.MatchString("^image", contentType)
 }
