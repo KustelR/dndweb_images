@@ -1,5 +1,6 @@
 # local application data
-static 
+static/*
+!static
 
 .env
 
