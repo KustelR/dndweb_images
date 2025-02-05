@@ -2,3 +2,6 @@
 static 
 
 .env
+
+# build files
+*.exe
