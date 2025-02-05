@@ -59,3 +59,11 @@ func createAsset(data io.ReadCloser) string {
 	}
 	return filename
 }
+
+func fsSetHeaders(fs http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/jpeg")
+
+		fs.ServeHTTP(w, r)
+	}
+}
