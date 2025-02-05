@@ -21,12 +21,13 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Printf("POST request received  Content-Type: %s\n", contentType)
 		isImage, _ := checkImageType(contentType)
-		if !isImage {
+		filename, err := createAsset(r.Body)
+		if !isImage || err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "Invalid content type. Only images are allowed.")
 			return
 		}
-		fmt.Fprint(w, createAsset(r.Body))
+		fmt.Fprint(w, filename)
 		w.WriteHeader(http.StatusCreated)
 	}
 }
@@ -48,19 +49,23 @@ func main() {
 	NewServer(80, HandleRequest)
 }
 
-func createAsset(data io.ReadCloser) string {
+func createAsset(data io.ReadCloser) (string, error) {
 	byteData, err := io.ReadAll(data)
 	if err != nil {
 		fmt.Printf("unable to read asset: %s\n", err)
 	}
+	isImage, _ := checkImageType(http.DetectContentType(byteData))
+	if !isImage {
+		return "", fmt.Errorf("provided file is not an image")
+	}
 	hashed := fnv.New32a()
-	filename := strconv.FormatInt(int64(fnv.New32a().Sum32()), 16)
 	hashed.Write(byteData)
+	filename := strconv.FormatInt(int64(hashed.Sum32()), 16)
 	err = os.WriteFile(fmt.Sprintf("./static/%v", filename), byteData, 0777)
 	if err != nil {
 		fmt.Printf("unable to create asset: %s\n", err)
 	}
-	return filename
+	return filename, nil
 }
 func checkImageType(contentType string) (bool, error) {
 	return regexp.MatchString("^image", contentType)
