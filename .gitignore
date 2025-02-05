@@ -1,2 +1,4 @@
 # local application data
 static 
+
+.env
