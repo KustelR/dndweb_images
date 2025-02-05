@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type HttpServer struct {
@@ -45,8 +48,25 @@ func NewServer(port int, handler func(http.ResponseWriter, *http.Request)) {
 
 }
 
+func init() {
+	// loads values from .env into the system
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+}
+
 func main() {
-	NewServer(80, HandleRequest)
+	var port int
+	imagesApiPort, iapExists := os.LookupEnv("IMAGES_API_PORT")
+	if iapExists {
+		parsedPort, _ := strconv.Atoi(imagesApiPort)
+		port = parsedPort
+	}
+	if port == 0 {
+		panic("port is not provided: set env IMAGES_API_PORT")
+	}
+
+	NewServer(port, HandleRequest)
 }
 
 func createAsset(data io.ReadCloser) (string, error) {
