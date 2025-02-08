@@ -74,9 +74,10 @@ func createAsset(data io.ReadCloser) (string, error) {
 	if err != nil {
 		fmt.Printf("unable to read asset: %s\n", err)
 	}
-	isImage, _ := checkImageType(http.DetectContentType(byteData))
+	contentType := http.DetectContentType(byteData)
+	isImage, _ := checkImageType(contentType)
 	if !isImage {
-		return "", fmt.Errorf("provided file is not an image")
+		return "", fmt.Errorf("provided file is not an image, it is: %s", contentType)
 	}
 	hashed := fnv.New32a()
 	hashed.Write(byteData)
