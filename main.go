@@ -91,3 +91,17 @@ func createAsset(data io.ReadCloser) (string, error) {
 func checkImageType(contentType string) (bool, error) {
 	return regexp.MatchString("^image", contentType)
 }
+
+func cors(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+
+		if r.Method == "OPTIONS" {
+			return
+		}
+
+		handler(w, r)
+	}
+}
