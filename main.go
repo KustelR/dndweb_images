@@ -20,14 +20,20 @@ type HttpServer struct {
 func HandleRequest(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
+
 		contentType := r.Header.Get("Content-Type")
 
 		fmt.Printf("POST request received  Content-Type: %s\n", contentType)
 		isImage, _ := checkImageType(contentType)
 		filename, err := createAsset(r.Body)
-		if !isImage || err != nil {
+		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Invalid content type. Only images are allowed.")
+			fmt.Fprintf(w, "%s", err)
+			return
+		}
+		if !isImage {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprintf(w, "Invalid content type. Only images are allowed. Error: %s", err)
 			return
 		}
 		fmt.Fprint(w, filename)
@@ -37,7 +43,7 @@ func HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 func NewServer(port int, handler func(http.ResponseWriter, *http.Request)) {
 
-	http.HandleFunc("/", HandleRequest)
+	http.HandleFunc("/", cors(HandleRequest))
 	fs := http.FileServer(http.Dir("static/"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	fmt.Printf("Server listening at %v\n", port)
