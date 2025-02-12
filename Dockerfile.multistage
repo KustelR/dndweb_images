@@ -1,0 +1,23 @@
+FROM golang:latest AS build-stage
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY *.go ./
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /imagesapi
+
+FROM build-stage AS test-stage
+RUN go test -v ./...
+
+FROM alpine as build-release-stage
+
+WORKDIR /
+
+COPY --from=build-stage /imagesapi /imagesapi
+ENV IMAGES_API_PORT=7500
+EXPOSE 7500
+
+
+ENTRYPOINT [ "/imagesapi" ]
