@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -88,7 +90,18 @@ func createAsset(data io.ReadCloser) (string, error) {
 	hashed := fnv.New32a()
 	hashed.Write(byteData)
 	filename := strconv.FormatInt(int64(hashed.Sum32()), 16)
-	err = os.WriteFile(fmt.Sprintf("./static/%v", filename), byteData, 0777)
+	assetPath := "static"
+	_, err = os.Stat(fmt.Sprintf("/%s/", assetPath))
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			err2 := os.Mkdir(fmt.Sprintf("./%s", assetPath), 0777)
+			log.Print(err2)
+
+		} else {
+			log.Print(err)
+		}
+	}
+	err = os.WriteFile(fmt.Sprintf("./%s/%v", assetPath, filename), byteData, 0777)
 	if err != nil {
 		fmt.Printf("unable to create asset: %s\n", err)
 	}
